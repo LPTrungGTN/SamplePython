@@ -6,3 +6,28 @@ services:
       - "8001:8001"
     volumes:
       - .:/app
+
+  mysql:
+    image: mysql:8.0
+    container_name: attendance_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password1
+      MYSQL_DATABASE: attendance
+    volumes:
+      - ./config/mysql/data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    command: --default-authentication-plugin=caching_sha2_password
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOSTS: attendance_db
+      PMA_USER: root
+      PMA_PASSWORD: root_password1
+      PMA_ARBITRARY: 1
+    ports:
+      - "3400:80"
+    depends_on:
+      - mysql

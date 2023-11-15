@@ -4,6 +4,8 @@ import boto3
 import uuid
 import os
 from dotenv import load_dotenv
+import mysql.connector
+from mysql.connector import Error
 
 load_dotenv()
 
@@ -23,6 +25,27 @@ session = boto3.Session(
 s3_client = session.client("s3", region_name=REGION)
 rekognition_client = session.client("rekognition", region_name=REGION)
 
+# Configuration for MySQL Database
+MYSQL_HOST = "attendance_db"
+MYSQL_DATABASE = "attendance"
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "root_password1"
+
+
+def create_mysql_connection():
+    try:
+        connection = mysql.connector.connect(
+            host=MYSQL_HOST,
+            database=MYSQL_DATABASE,
+            user=MYSQL_USER,
+            password=MYSQL_PASSWORD,
+        )
+        if connection.is_connected():
+            return connection
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+        return None
+
 
 def upload_file_to_s3(file, bucket, object_name):
     s3_client.upload_fileobj(file, bucket, object_name)
@@ -41,6 +64,11 @@ def delete_file_from_s3(bucket, object_name):
 async def detect_faces(file: UploadFile = File(...)):
     s3_object_name = None
     try:
+        connection = create_mysql_connection()
+        if connection:
+            print("Connection to MySQL DB successful")
+            connection.close()
+
         # Validate file type
         if file.content_type not in ["image/jpeg", "image/png"]:
             raise HTTPException(status_code=400, detail="Invalid file type")
