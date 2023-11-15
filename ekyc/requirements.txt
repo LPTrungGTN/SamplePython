@@ -5,3 +5,4 @@ pydantic
 SQLAlchemy
 boto3
 pymysql
+python-dotenv

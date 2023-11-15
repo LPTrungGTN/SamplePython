@@ -3,16 +3,23 @@ from fastapi.responses import JSONResponse
 import boto3
 import uuid
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
 # Configuration for AWS
-REGION = "ap-northeast-1"
-BUCKET = "s3tokyooo"
+REGION = os.getenv("AWS_REGION")
+BUCKET = os.getenv("AWS_BUCKET")
 # Make sure your AWS credentials are properly configured in the environment variables or AWS credentials file
 
 # AWS session and client
-session = boto3.Session(region_name=REGION)
+session = boto3.Session(
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name=REGION,
+)
 s3_client = session.client("s3", region_name=REGION)
 rekognition_client = session.client("rekognition", region_name=REGION)
 
@@ -65,6 +72,7 @@ async def detect_faces(file: UploadFile = File(...)):
                 return {"message": "Human detected", "facing": facing}
             else:
                 return {"message": "Human face not detected with high confidence"}
+        return {"message": "Human face not detected"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
     finally:
