@@ -1,8 +1,5 @@
 fastapi
-uvicorn
-python-multipart
-pydantic
-SQLAlchemy
+uvicorn[standard]
 boto3
-pymysql
 python-dotenv
+python-multipart
