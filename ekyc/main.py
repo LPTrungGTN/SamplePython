@@ -6,6 +6,7 @@ import boto3
 import uuid
 import os
 from database import create_mysql_connection
+from repository.card_repository import insert_card_record
 
 load_dotenv()
 
@@ -33,8 +34,8 @@ def delete_file_from_s3(bucket, object_name):
     except Exception as e:
         raise e
 
-@app.post("/detect_faces/")
-async def detect_faces(file: UploadFile = File(...)):
+@app.post("/detect_faces/left")
+async def detect_faces(file: UploadFile = File(...), card_type: str = None, profile_id: int = None):
     s3_object_name = None
     try:
         connection = create_mysql_connection()
@@ -55,23 +56,22 @@ async def detect_faces(file: UploadFile = File(...)):
         if response["FaceDetails"]:
             face_detail = response["FaceDetails"][0]
             if face_detail["Confidence"] > 90:
-                facing = "unknown"
-                if face_detail["Pose"]["Yaw"] < -45:
+                if -45 <= face_detail["Pose"]["Yaw"] < -30:
                     facing = "left"
-                elif face_detail["Pose"]["Yaw"] > 45:
-                    facing = "right"
-
-                gender = face_detail["Gender"]["Value"]
-                gender_confidence = face_detail["Gender"]["Confidence"]
-                age_range = f"{face_detail['AgeRange']['Low']}-{face_detail['AgeRange']['High']}"
-                print('\033[91m'+'face_detail["Pose"]["Yaw"]: ' + '\033[92m', face_detail["Pose"]["Yaw"])
-                return {
-                    "message": "Human detected",
-                    "facing": facing,
-                    "gender": gender,
-                    "gender_confidence": gender_confidence,
-                    "age_range": age_range
-                }
+                    gender = face_detail["Gender"]["Value"]
+                    gender_confidence = face_detail["Gender"]["Confidence"]
+                    age_range = f"{face_detail['AgeRange']['Low']}-{face_detail['AgeRange']['High']}"
+                    print('\033[91m'+'face_detail["Pose"]["Yaw"]: ' + '\033[92m', face_detail["Pose"]["Yaw"])
+                    insert_card_record(connection, profile_id, card_type, s3_object_name)
+                    return {
+                        "message": "Human detected",
+                        "facing": facing,
+                        "gender": gender,
+                        "gender_confidence": gender_confidence,
+                        "age_range": age_range
+                    }
+                else:
+                    return {"message": "You need to turn left to be detected correctly"}
             else:
                 return {"message": "Human face not detected with high confidence"}
         return {"message": "Human face not detected"}
