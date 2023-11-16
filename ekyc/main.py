@@ -81,7 +81,7 @@ async def detect_faces(file: UploadFile = File(...)):
                 gender = face_detail["Gender"]["Value"]
                 gender_confidence = face_detail["Gender"]["Confidence"]
                 age_range = f"{face_detail['AgeRange']['Low']}-{face_detail['AgeRange']['High']}"
-				print('\033[91m'+'face_detail["Pose"]["Yaw"]: ' + '\033[92m', face_detail["Pose"]["Yaw"])
+                print('\033[91m'+'face_detail["Pose"]["Yaw"]: ' + '\033[92m', face_detail["Pose"]["Yaw"])
                 return {
                     "message": "Human detected",
                     "facing": facing,
