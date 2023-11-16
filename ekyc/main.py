@@ -11,12 +11,9 @@ load_dotenv()
 
 app = FastAPI()
 
-# Configuration for AWS
 REGION = os.getenv("AWS_REGION")
 BUCKET = os.getenv("AWS_BUCKET")
-# Make sure your AWS credentials are properly configured in the environment variables or AWS credentials file
 
-# AWS session and client
 session = boto3.Session(
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
@@ -39,11 +36,9 @@ def create_mysql_connection():
         print("Error while connecting to MySQL", e)
         return None
 
-
 def upload_file_to_s3(file, bucket, object_name):
     s3_client.upload_fileobj(file, bucket, object_name)
     return object_name
-
 
 def delete_file_from_s3(bucket, object_name):
     try:
@@ -51,7 +46,6 @@ def delete_file_from_s3(bucket, object_name):
         return response
     except Exception as e:
         raise e
-
 
 @app.post("/detect_faces/")
 async def detect_faces(file: UploadFile = File(...)):
@@ -62,24 +56,19 @@ async def detect_faces(file: UploadFile = File(...)):
             print("Connection to MySQL DB successful")
             connection.close()
 
-        # Validate file type
         if file.content_type not in ["image/jpeg", "image/png"]:
             raise HTTPException(status_code=400, detail="Invalid file type")
 
-        # Generate a unique file name
         file_name = str(uuid.uuid4())
         file_extension = os.path.splitext(file.filename)[1]
         s3_object_name = f"{file_name}{file_extension}"
 
-        # Upload file to S3
         upload_file_to_s3(file.file, BUCKET, s3_object_name)
 
-        # Use boto3 to connect to AWS Rekognition with the image from S3
         response = rekognition_client.detect_faces(
             Image={"S3Object": {"Bucket": BUCKET, "Name": s3_object_name}},
             Attributes=["ALL"],
         )
-        # Process response and check if human
         if response["FaceDetails"]:
             face_detail = response["FaceDetails"][0]
             if face_detail["Confidence"] > 90:
@@ -89,15 +78,23 @@ async def detect_faces(file: UploadFile = File(...)):
                 elif face_detail["Pose"]["Yaw"] > 45:
                     facing = "right"
 
-                # Return result without adding to the database
-                return {"message": "Human detected", "facing": facing}
+                gender = face_detail["Gender"]["Value"]
+                gender_confidence = face_detail["Gender"]["Confidence"]
+                age_range = f"{face_detail['AgeRange']['Low']}-{face_detail['AgeRange']['High']}"
+				print('\033[91m'+'face_detail["Pose"]["Yaw"]: ' + '\033[92m', face_detail["Pose"]["Yaw"])
+                return {
+                    "message": "Human detected",
+                    "facing": facing,
+                    "gender": gender,
+                    "gender_confidence": gender_confidence,
+                    "age_range": age_range
+                }
             else:
                 return {"message": "Human face not detected with high confidence"}
         return {"message": "Human face not detected"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
     finally:
-        # Delete the file from S3 if it was uploaded
         if s3_object_name:
             try:
                 delete_file_from_s3(BUCKET, s3_object_name)
