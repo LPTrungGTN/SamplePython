@@ -25,20 +25,13 @@ session = boto3.Session(
 s3_client = session.client("s3", region_name=REGION)
 rekognition_client = session.client("rekognition", region_name=REGION)
 
-# Configuration for MySQL Database
-MYSQL_HOST = "attendance_db"
-MYSQL_DATABASE = "attendance"
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "root_password1"
-
-
 def create_mysql_connection():
     try:
         connection = mysql.connector.connect(
-            host=MYSQL_HOST,
-            database=MYSQL_DATABASE,
-            user=MYSQL_USER,
-            password=MYSQL_PASSWORD,
+            host=os.getenv("MYSQL_HOST"),
+            database=os.getenv("MYSQL_DATABASE"),
+            user=os.getenv("MYSQL_USER"),
+            password=os.getenv("MYSQL_PASSWORD"),
         )
         if connection.is_connected():
             return connection
