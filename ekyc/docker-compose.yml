@@ -9,21 +9,21 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: attendance_db
+    container_name: ekyc_db
     environment:
       MYSQL_ROOT_PASSWORD: root_password1
-      MYSQL_DATABASE: attendance
+      MYSQL_DATABASE: ekyc
     volumes:
       - ./config/mysql/data:/var/lib/mysql
     ports:
       - "3307:3306"
     command: --default-authentication-plugin=caching_sha2_password
 
-  phpmyadmin:
+  mysqladmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
+    container_name: mysqladmin
     environment:
-      PMA_HOSTS: attendance_db
+      PMA_HOSTS: ekyc_db
       PMA_USER: root
       PMA_PASSWORD: root_password1
       PMA_ARBITRARY: 1
