@@ -7,6 +7,7 @@ import uuid
 import os
 from database import create_mysql_connection
 from repository.card_repository import insert_card_record
+from enums.type import CARD_TYPE
 
 load_dotenv()
 
@@ -38,9 +39,7 @@ def delete_file_from_s3(bucket, object_name):
 
 
 @app.post("/detect_faces/left")
-async def detect_faces(
-    file: UploadFile = File(...), card_type: str = None, profile_id: int = None
-):
+async def detect_faces(file: UploadFile, card_type: CARD_TYPE, profile_id: int):
     s3_object_name: str = ""
     try:
         connection = create_mysql_connection()
