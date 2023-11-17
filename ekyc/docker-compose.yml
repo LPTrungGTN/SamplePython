@@ -16,7 +16,7 @@ services:
     volumes:
       - ./config/mysql/data:/var/lib/mysql
     ports:
-      - "3307:3306"
+      - "3308:3306"
     command: --default-authentication-plugin=caching_sha2_password
 
   mysqladmin:
@@ -28,6 +28,6 @@ services:
       PMA_PASSWORD: root_password1
       PMA_ARBITRARY: 1
     ports:
-      - "3400:80"
+      - "3401:80"
     depends_on:
       - mysql
